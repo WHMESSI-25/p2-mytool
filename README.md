@@ -40,4 +40,14 @@ npm run build   # 打包产物在 dist/（部署用的就是它）
 2. 填标题 / 正文 / 日期 / 作者 → 点「① 生成发布 JSON」
 3. 点「复制 JSON」→ 点「打开 GitHub 编辑页」
 4. 把内容粘贴进编辑器，点右上角 Commit changes
-5. 约等 1 分钟，自动部署完成后全网可见
+5. 约等 1-2 分钟自动部署完成全网生效（缓存上限 10 分钟）；若公告板没变化，按 Ctrl+F5 硬刷新
+
+## 发布带图公告
+
+1. 先传图：GitHub 仓库 → `public` 文件夹旁 Add file → Create new file，路径输入 `img/图片名.jpg` → 或者直接 Upload files 拖图进 `public/img/`
+2. 传完在浏览器打开图片确认，复制地址栏网址（形如 `https://whmessi-25.github.io/p2-mytool/img/图片名.jpg`）
+3. 在管理页发布表单的「图片链接」里粘贴该网址，其余同上
+
+## 更新缓存说明
+
+页面 fetch 数据时带时间戳参数绕过浏览器缓存；GitHub Pages 自身的 CDN 缓存最长 10 分钟，属于平台限制。

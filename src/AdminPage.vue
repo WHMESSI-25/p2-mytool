@@ -29,7 +29,8 @@ async function tryUnlock() {
 // 当前公告列表（从数据文件读进来，作为生成新 JSON 的底稿）
 const announcements = ref([])
 onMounted(async () => {
-  const resp = await fetch('announcements.json')
+  // ?t=时间戳：绕过浏览器缓存，保证读到的删除列表也是最新的
+  const resp = await fetch(`announcements.json?t=${Date.now()}`)
   announcements.value = await resp.json()
 })
 
@@ -39,11 +40,12 @@ const today = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-// 发布表单四个字段
+// 发布表单四个字段 + 可选配图链接
 const title = ref('')
 const content = ref('')
 const date = ref(today())
 const author = ref('')
+const image = ref('')
 
 // 删除勾选（存要删的公告在列表中的序号）
 const checked = ref([])
@@ -61,10 +63,10 @@ function genAdd() {
     return
   }
   tip.value = ''
-  const next = [
-    { title: title.value, content: content.value, date: date.value, author: author.value },
-    ...announcements.value,
-  ]
+  const entry = { title: title.value, content: content.value, date: date.value, author: author.value }
+  // 配图是可选字段：不填就不写进 JSON
+  if (image.value) entry.image = image.value
+  const next = [entry, ...announcements.value]
   outputJson.value = JSON.stringify(next, null, 2)
   outputMode.value = 'add'
 }
@@ -133,6 +135,10 @@ async function copyJson() {
             <input v-model="author" placeholder="如：教务处王老师" />
           </label>
         </div>
+        <label class="field">
+          图片链接（可选，不填就没图）
+          <input v-model="image" placeholder="先在 GitHub 上传图片到 public/img/，再粘贴它的网址" />
+        </label>
         <button class="btn" @click="genAdd">① 生成发布 JSON</button>
       </section>
 
@@ -158,7 +164,7 @@ async function copyJson() {
           </a>
         </div>
         <p class="tip">
-          粘贴后点右上角 Commit changes，约 1 分钟后{{ outputMode === 'delete' ? '删除' : '公告' }}全网生效。
+          粘贴后点右上角 Commit changes，约 1-2 分钟全网生效（缓存上限 10 分钟）；若公告板没变化，按 Ctrl+F5 硬刷新。
         </p>
       </section>
     </template>

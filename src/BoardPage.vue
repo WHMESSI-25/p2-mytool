@@ -14,7 +14,8 @@ const visibleAnnouncements = computed(() => {
 
 // 页面加载完成后去读数据文件
 onMounted(async () => {
-  const resp = await fetch('announcements.json')
+  // ?t=时间戳：绕过浏览器缓存，保证每次打开都拿到最新公告
+  const resp = await fetch(`announcements.json?t=${Date.now()}`)
   announcements.value = await resp.json()
 })
 </script>
@@ -32,6 +33,8 @@ onMounted(async () => {
           <span class="notice-date">{{ item.date }}</span>
         </div>
         <p class="notice-content">{{ item.content }}</p>
+        <!-- 可选配图：公告带 image 字段就渲染 -->
+        <img v-if="item.image" :src="item.image" class="notice-img" alt="公告配图" />
         <span class="notice-author">发布人：{{ item.author }}</span>
       </li>
     </ul>
