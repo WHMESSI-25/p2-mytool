@@ -1,5 +1,5 @@
 <script setup>
-// 公告板主页：读数据 → 排序 → 渲染列表
+// 公告板主页：读数据 → 排序 → 渲染卡片列表（点击卡片进详情页）
 import { ref, computed, onMounted } from 'vue'
 
 // 公告列表：从 announcements.json 读回来的数据存这里
@@ -22,11 +22,13 @@ onMounted(async () => {
 
 <template>
   <main class="board">
-    <ul class="notice-list">
-      <li
+    <div class="notice-list">
+      <!-- 卡片是链接：点击进详情页，地址带上「日期|标题」用于找到这条公告 -->
+      <a
         v-for="item in visibleAnnouncements"
         :key="item.date + item.title"
         class="notice-card"
+        :href="'#/notice/' + encodeURIComponent(item.date + '|' + item.title)"
       >
         <div class="notice-head">
           <h2 class="notice-title">{{ item.title }}</h2>
@@ -36,8 +38,8 @@ onMounted(async () => {
         <!-- 可选配图：公告带 image 字段就渲染 -->
         <img v-if="item.image" :src="item.image" class="notice-img" alt="公告配图" />
         <span class="notice-author">发布人：{{ item.author }}</span>
-      </li>
-    </ul>
+      </a>
+    </div>
 
     <p v-if="visibleAnnouncements.length === 0" class="placeholder">
       暂无公告 —— 去「进入管理」发布第一条吧

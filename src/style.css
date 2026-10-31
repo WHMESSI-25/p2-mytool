@@ -67,6 +67,9 @@ body {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 14px 16px;
+  text-decoration: none;
+  color: inherit;
+  display: block;
 }
 
 .notice-head {
@@ -93,6 +96,31 @@ body {
   font-size: 14px;
   line-height: 1.6;
   color: #444;
+  white-space: pre-line; /* 保留正文里的换行 */
+}
+
+/* 列表里的正文只显示 3 行，完整内容点卡片进详情页看 */
+.notice-list .notice-content {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 详情页正文不限制行数 */
+.detail-content {
+  display: block;
+  -webkit-line-clamp: unset;
+  font-size: 15px;
+}
+
+/* 返回链接 */
+.back-link {
+  display: inline-block;
+  margin-bottom: 12px;
+  color: #2f6fed;
+  text-decoration: none;
+  font-size: 14px;
 }
 
 .notice-author {
