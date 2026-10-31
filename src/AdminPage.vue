@@ -3,8 +3,9 @@
 // 而是帮你把改好的 announcements.json 生成出来 → 复制 → 跳去 GitHub 粘贴提交
 import { ref, onMounted } from 'vue'
 
-// 仓库推送后填真实地址：https://github.com/用户名/p2-mytool/edit/main/public/announcements.json
-const GITHUB_EDIT_URL = ''
+// GitHub 编辑页：管理页生成 JSON 后跳到这里粘贴提交
+const GITHUB_EDIT_URL =
+  'https://github.com/WHMESSI-25/p2-mytool/edit/main/public/announcements.json'
 
 // 当前公告列表（从数据文件读进来，作为生成新 JSON 的底稿）
 const announcements = ref([])
