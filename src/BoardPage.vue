@@ -1,0 +1,43 @@
+<script setup>
+// 公告板主页：读数据 → 排序 → 渲染列表
+import { ref, computed, onMounted } from 'vue'
+
+// 公告列表：从 announcements.json 读回来的数据存这里
+const announcements = ref([])
+
+// 展示用：日期新的在前，最多 20 条
+const visibleAnnouncements = computed(() => {
+  return [...announcements.value]
+    .sort((a, b) => (a.date < b.date ? 1 : -1))
+    .slice(0, 20)
+})
+
+// 页面加载完成后去读数据文件
+onMounted(async () => {
+  const resp = await fetch('announcements.json')
+  announcements.value = await resp.json()
+})
+</script>
+
+<template>
+  <main class="board">
+    <ul class="notice-list">
+      <li
+        v-for="item in visibleAnnouncements"
+        :key="item.date + item.title"
+        class="notice-card"
+      >
+        <div class="notice-head">
+          <h2 class="notice-title">{{ item.title }}</h2>
+          <span class="notice-date">{{ item.date }}</span>
+        </div>
+        <p class="notice-content">{{ item.content }}</p>
+        <span class="notice-author">发布人：{{ item.author }}</span>
+      </li>
+    </ul>
+
+    <p v-if="visibleAnnouncements.length === 0" class="placeholder">
+      暂无公告 —— 去「进入管理」发布第一条吧
+    </p>
+  </main>
+</template>

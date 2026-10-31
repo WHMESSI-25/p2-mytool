@@ -1,0 +1,127 @@
+<script setup>
+// 管理页：路线甲下公告数据存在 GitHub 仓库里，本页不直接改数据，
+// 而是帮你把改好的 announcements.json 生成出来 → 复制 → 跳去 GitHub 粘贴提交
+import { ref, onMounted } from 'vue'
+
+// 仓库推送后填真实地址：https://github.com/用户名/p2-mytool/edit/main/public/announcements.json
+const GITHUB_EDIT_URL = ''
+
+// 当前公告列表（从数据文件读进来，作为生成新 JSON 的底稿）
+const announcements = ref([])
+onMounted(async () => {
+  const resp = await fetch('announcements.json')
+  announcements.value = await resp.json()
+})
+
+// 今天日期（本地时区），作为发布表单的默认值
+const today = () => {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+// 发布表单四个字段
+const title = ref('')
+const content = ref('')
+const date = ref(today())
+const author = ref('')
+
+// 删除勾选（存要删的公告在列表中的序号）
+const checked = ref([])
+
+// 提示信息 + 输出区
+const tip = ref('')
+const outputJson = ref('')
+const outputMode = ref('') // add = 发布，delete = 删除
+const copied = ref(false)
+
+// 生成「发布」版 JSON：新公告插到最前面
+function genAdd() {
+  if (!title.value || !content.value || !date.value || !author.value) {
+    tip.value = '四个格子都要填才能生成'
+    return
+  }
+  tip.value = ''
+  const next = [
+    { title: title.value, content: content.value, date: date.value, author: author.value },
+    ...announcements.value,
+  ]
+  outputJson.value = JSON.stringify(next, null, 2)
+  outputMode.value = 'add'
+}
+
+// 生成「删除后」的 JSON：去掉勾选的
+function genDelete() {
+  if (checked.value.length === 0) {
+    tip.value = '先在上面勾选要删除的公告'
+    return
+  }
+  tip.value = ''
+  const next = announcements.value.filter((_, i) => !checked.value.includes(i))
+  outputJson.value = JSON.stringify(next, null, 2)
+  outputMode.value = 'delete'
+}
+
+// 复制到剪贴板
+async function copyJson() {
+  try {
+    await navigator.clipboard.writeText(outputJson.value)
+    copied.value = true
+    setTimeout(() => (copied.value = false), 2000)
+  } catch {
+    tip.value = '自动复制失败：请手动全选下面的文本复制'
+  }
+}
+</script>
+
+<template>
+  <main class="board">
+    <h2 class="page-title">发布新公告</h2>
+    <section class="admin-card">
+      <label class="field">
+        标题
+        <input v-model="title" placeholder="一句话说清这件事" />
+      </label>
+      <label class="field">
+        正文
+        <textarea v-model="content" rows="3" placeholder="详细内容"></textarea>
+      </label>
+      <div class="row">
+        <label class="field">
+          日期
+          <input type="date" v-model="date" />
+        </label>
+        <label class="field">
+          作者
+          <input v-model="author" placeholder="如：教务处王老师" />
+        </label>
+      </div>
+      <button class="btn" @click="genAdd">① 生成发布 JSON</button>
+    </section>
+
+    <h2 class="page-title">删除公告</h2>
+    <section class="admin-card">
+      <p v-if="announcements.length === 0" class="placeholder">还没有公告可删</p>
+      <label v-for="(a, i) in announcements" :key="i" class="check-row">
+        <input type="checkbox" :value="i" v-model="checked" />
+        <span>{{ a.date }}｜{{ a.title }}</span>
+      </label>
+      <button class="btn btn-outline" @click="genDelete">① 生成删除后 JSON</button>
+    </section>
+
+    <p v-if="tip" class="tip">{{ tip }}</p>
+
+    <section v-if="outputJson" class="admin-card">
+      <h2 class="page-title">第 2 步：复制 → 去 GitHub 粘贴提交</h2>
+      <textarea class="json-box" readonly :value="outputJson" rows="14"></textarea>
+      <div class="row">
+        <button class="btn" @click="copyJson">{{ copied ? '✅ 已复制' : '复制 JSON' }}</button>
+        <a v-if="GITHUB_EDIT_URL" class="btn btn-outline" :href="GITHUB_EDIT_URL" target="_blank">
+          打开 GitHub 编辑页 →
+        </a>
+      </div>
+      <p class="tip">
+        粘贴后点右上角 Commit changes，约 1 分钟后{{ outputMode === 'delete' ? '删除' : '公告' }}全网生效。
+      </p>
+    </section>
+  </main>
+</template>
