@@ -1,0 +1,37 @@
+/* 全局样式：整个应用通用的基础样式放这里 */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  background: #f5f6f8;
+  color: #1f2328;
+}
+
+/* 顶栏 */
+.topbar {
+  background: #2f6fed;
+  color: #fff;
+  padding: 16px 20px;
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: 20px;
+}
+
+/* 公告板主体：限制宽度并居中，手机上自动占满 */
+.board {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 20px 16px;
+}
+
+.placeholder {
+  color: #8a8f98;
+  text-align: center;
+  padding: 40px 0;
+}
