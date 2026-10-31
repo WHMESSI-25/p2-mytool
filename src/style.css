@@ -188,3 +188,14 @@ body {
   color: #333;
   box-sizing: border-box;
 }
+
+/* 密码锁输入框 */
+.pwd-input {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font: inherit;
+  color: #1f2328;
+  flex: 1;
+  min-width: 160px;
+}

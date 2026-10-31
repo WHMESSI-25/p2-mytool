@@ -7,6 +7,25 @@ import { ref, onMounted } from 'vue'
 const GITHUB_EDIT_URL =
   'https://github.com/WHMESSI-25/p2-mytool/edit/main/public/announcements.json'
 
+// ===== 管理密码门（同学反馈：任何人都能进管理页会混乱） =====
+// 这是「君子锁」：挡随手乱点的人。数据安全由 GitHub 写权限保证（只有仓库主人能提交）
+const PASSWORD_SHA256 = '1e4e8b049223c94c574465b3d3755ad6fbabb1d8a2898480ff90b44d07c34369'
+const unlocked = ref(localStorage.getItem('p2_admin_ok') === PASSWORD_SHA256)
+const pwd = ref('')
+const pwdErr = ref('')
+
+async function tryUnlock() {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pwd.value))
+  const hex = [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('')
+  if (hex === PASSWORD_SHA256) {
+    unlocked.value = true
+    localStorage.setItem('p2_admin_ok', hex)
+    pwdErr.value = ''
+  } else {
+    pwdErr.value = '密码不对，再想想'
+  }
+}
+
 // 当前公告列表（从数据文件读进来，作为生成新 JSON 的底稿）
 const announcements = ref([])
 onMounted(async () => {
@@ -76,53 +95,72 @@ async function copyJson() {
 
 <template>
   <main class="board">
-    <h2 class="page-title">发布新公告</h2>
-    <section class="admin-card">
-      <label class="field">
-        标题
-        <input v-model="title" placeholder="一句话说清这件事" />
-      </label>
-      <label class="field">
-        正文
-        <textarea v-model="content" rows="3" placeholder="详细内容"></textarea>
-      </label>
+    <!-- 密码锁：没解锁前只看到这个卡片 -->
+    <section v-if="!unlocked" class="admin-card">
+      <h2 class="page-title" style="margin-top: 0">🔒 管理页已上锁</h2>
+      <p class="tip">这里是管理员功能，输入管理密码继续（密码找公告管理员要）。</p>
       <div class="row">
+        <input
+          class="pwd-input"
+          type="password"
+          v-model="pwd"
+          placeholder="管理密码"
+          @keyup.enter="tryUnlock"
+        />
+        <button class="btn" @click="tryUnlock">解锁</button>
+      </div>
+      <p v-if="pwdErr" class="tip">{{ pwdErr }}</p>
+    </section>
+
+    <template v-else>
+      <h2 class="page-title">发布新公告</h2>
+      <section class="admin-card">
         <label class="field">
-          日期
-          <input type="date" v-model="date" />
+          标题
+          <input v-model="title" placeholder="一句话说清这件事" />
         </label>
         <label class="field">
-          作者
-          <input v-model="author" placeholder="如：教务处王老师" />
+          正文
+          <textarea v-model="content" rows="3" placeholder="详细内容"></textarea>
         </label>
-      </div>
-      <button class="btn" @click="genAdd">① 生成发布 JSON</button>
-    </section>
+        <div class="row">
+          <label class="field">
+            日期
+            <input type="date" v-model="date" />
+          </label>
+          <label class="field">
+            作者
+            <input v-model="author" placeholder="如：教务处王老师" />
+          </label>
+        </div>
+        <button class="btn" @click="genAdd">① 生成发布 JSON</button>
+      </section>
 
-    <h2 class="page-title">删除公告</h2>
-    <section class="admin-card">
-      <p v-if="announcements.length === 0" class="placeholder">还没有公告可删</p>
-      <label v-for="(a, i) in announcements" :key="i" class="check-row">
-        <input type="checkbox" :value="i" v-model="checked" />
-        <span>{{ a.date }}｜{{ a.title }}</span>
-      </label>
-      <button class="btn btn-outline" @click="genDelete">① 生成删除后 JSON</button>
-    </section>
+      <h2 class="page-title">删除公告</h2>
+      <section class="admin-card">
+        <p v-if="announcements.length === 0" class="placeholder">还没有公告可删</p>
+        <label v-for="(a, i) in announcements" :key="i" class="check-row">
+          <input type="checkbox" :value="i" v-model="checked" />
+          <span>{{ a.date }}｜{{ a.title }}</span>
+        </label>
+        <button class="btn btn-outline" @click="genDelete">① 生成删除后 JSON</button>
+      </section>
 
-    <p v-if="tip" class="tip">{{ tip }}</p>
+      <p v-if="tip" class="tip">{{ tip }}</p>
 
-    <section v-if="outputJson" class="admin-card">
-      <h2 class="page-title">第 2 步：复制 → 去 GitHub 粘贴提交</h2>
-      <textarea class="json-box" readonly :value="outputJson" rows="14"></textarea>
-      <div class="row">
-        <button class="btn" @click="copyJson">{{ copied ? '✅ 已复制' : '复制 JSON' }}</button>
-        <a v-if="GITHUB_EDIT_URL" class="btn btn-outline" :href="GITHUB_EDIT_URL" target="_blank">
-          打开 GitHub 编辑页 →
-        </a>
-      </div>
-      <p class="tip">
-        粘贴后点右上角 Commit changes，约 1 分钟后{{ outputMode === 'delete' ? '删除' : '公告' }}全网生效。
-      </p>
-    </section>
+      <section v-if="outputJson" class="admin-card">
+        <h2 class="page-title">第 2 步：复制 → 去 GitHub 粘贴提交</h2>
+        <textarea class="json-box" readonly :value="outputJson" rows="14"></textarea>
+        <div class="row">
+          <button class="btn" @click="copyJson">{{ copied ? '✅ 已复制' : '复制 JSON' }}</button>
+          <a v-if="GITHUB_EDIT_URL" class="btn btn-outline" :href="GITHUB_EDIT_URL" target="_blank">
+            打开 GitHub 编辑页 →
+          </a>
+        </div>
+        <p class="tip">
+          粘贴后点右上角 Commit changes，约 1 分钟后{{ outputMode === 'delete' ? '删除' : '公告' }}全网生效。
+        </p>
+      </section>
+    </template>
   </main>
 </template>
